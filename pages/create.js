@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import baseUrl from '../utils/baseUrl';
+import catchErrors from '../utils/catchErrors';
 
 import {
   Form,
@@ -18,11 +19,19 @@ const INITIAL_PRODUCT = {
   media: "",
   description: ""
 };
+
 function CreateProduct() {
   const [product, setProduct] = React.useState(INITIAL_PRODUCT);
   const [mediaPreview, setMediaPreview] = React.useState('');
   const [success, setSuccess] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [disabled, setDisabled] = React.useState(true);
+  const [error, setError] = React.useState('');
+
+  React.useEffect(() => {
+    const isProduct = Object.values(product).every(el => Boolean(el));
+    isProduct ? setDisabled(false) : setDisabled(true);
+  }, [product]);
 
   function handleChange(e) {
     const { name, value, files } = e.target;
@@ -58,8 +67,8 @@ function CreateProduct() {
       console.log({ response });
       setProduct(INITIAL_PRODUCT);
       setSuccess(true);
-    } catch (error) {
-      setLoading(false);
+    } catch (err) {
+      catchErrors(err, setError);
     } finally {
       setLoading(false);
     }
@@ -71,7 +80,12 @@ function CreateProduct() {
         <Icon name="add" color="orange" />
   			Create New Product
   		</Header>
-      <Form loading={loading} success={success} onSubmit={handleSubmit}>
+      <Form loading={loading} success={success} error={Boolean(error)} onSubmit={handleSubmit}>
+      <Message
+          error
+          header="Oops!"
+          content={error} 
+        />
         <Message
           success
           icon="check"
@@ -124,7 +138,7 @@ function CreateProduct() {
           color="blue"
           icon="pencil alternate"
           content="submit"
-          disabled={loading}
+          disabled={disabled || loading}
           type="submit" />
 
       </Form>
